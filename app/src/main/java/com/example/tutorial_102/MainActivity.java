@@ -1,72 +1,80 @@
 package com.example.tutorial_102;
 
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView textView;
-    Button button;
+    TextView timerView, outcomeMessage, bombInstruction;
+    Button disarmButton, replayButton;
+    RelativeLayout bombLayout;
+
+    CountDownTimer countDownTimer;
+    boolean isFlashing = false;
+    boolean disarmed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        timerView = findViewById(R.id.timerView);
+        bombLayout = findViewById(R.id.bombLayout);
+        disarmButton = findViewById(R.id.disarmButton);
+        outcomeMessage = findViewById(R.id.outcomeMessage);
+        replayButton = findViewById(R.id.replayButton);
+        bombInstruction = findViewById(R.id.bombInstruction);
 
-        // 🧠 Hook into your TextView and Button
-        textView = findViewById(R.id.textView); // make sure this ID matches your layout
-        button = findViewById(R.id.button);     // same for this
+        disarmButton.setOnClickListener(view -> disarmed = true);
+        replayButton.setOnClickListener(view -> recreate()); // restart activity
+
+        startBombSequence();
     }
 
-    // 🚀 Called when button is clicked
-    public void startCountdown(View view) {
-        Handler handler = new Handler();
-        final int[] count = {5};
+    private void startBombSequence() {
+        countDownTimer = new CountDownTimer(10000, 1000) {
+            int timeLeft = 10;
 
-        Runnable runnable = new Runnable() {
             @Override
-            public void run() {
-                if (count[0] > 0) {
-                    animateText(String.valueOf(count[0]));
-                    count[0]--;
-                    handler.postDelayed(this, 1000);
-                } else {
-                    animateText("HURRAY!");
-                    handler.postDelayed(() -> textView.setText(""), 1000);
+            public void onTick(long millisUntilFinished) {
+                if (disarmed) {
+                    showOutcome("Wow. You actually did it.\nYour mom is… mildly proud.");
+                    cancel();
+                    return;
+                }
+
+                timerView.setText(String.format("00:%02d", timeLeft--));
+                toggleFlashing();
+            }
+
+            @Override
+            public void onFinish() {
+                if (!disarmed) {
+                    showOutcome("💥 BOOM.\nYour life insurance has been notified.\n\nYour mom still doesn't love you.");
                 }
             }
         };
 
-        handler.post(runnable);
+        countDownTimer.start();
     }
 
-    private void animateText(String text) {
-        textView.setText(text);
-        textView.setScaleX(3f); // start BIG
-        textView.setScaleY(3f);
-
-        // Animate it back to normal scale
-        textView.animate()
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(700); // shrink time in milliseconds
+    private void showOutcome(String message) {
+        disarmButton.setVisibility(View.GONE);
+        timerView.setVisibility(View.GONE);
+        bombInstruction.setVisibility(View.GONE);
+        outcomeMessage.setVisibility(View.VISIBLE);
+        outcomeMessage.setText(message);
+        replayButton.setVisibility(View.VISIBLE);
     }
 
-
+    private void toggleFlashing() {
+        isFlashing = !isFlashing;
+        bombLayout.setBackgroundColor(isFlashing ? 0xFFFF0000 : 0xFF000000); // red/black
+    }
 }

@@ -6,15 +6,22 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView timerView, outcomeMessage, bombInstruction;
-    Button disarmButton, replayButton;
+    // Layouts
+    LinearLayout startLayout;
     RelativeLayout bombLayout;
+    RelativeLayout boringLayout;
 
+    // Views
+    Button fiveButton, gameButton, disarmButton, replayButton, backButton;
+    TextView timerView, outcomeMessage, bombInstruction, boringText, momLine;
+
+    // Logic
     CountDownTimer countDownTimer;
     boolean isFlashing = false;
     boolean disarmed = false;
@@ -24,17 +31,73 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        timerView = findViewById(R.id.timerView);
+        // Link layouts
+        startLayout = findViewById(R.id.startLayout);
         bombLayout = findViewById(R.id.bombLayout);
+        boringLayout = findViewById(R.id.boringLayout);
+
+        // Link buttons and views
+        fiveButton = findViewById(R.id.fiveButton);
+        gameButton = findViewById(R.id.gameButton);
+        //---
         disarmButton = findViewById(R.id.disarmButton);
-        outcomeMessage = findViewById(R.id.outcomeMessage);
         replayButton = findViewById(R.id.replayButton);
+        timerView = findViewById(R.id.timerView);
+        outcomeMessage = findViewById(R.id.outcomeMessage);
         bombInstruction = findViewById(R.id.bombInstruction);
+        //---
+        boringText = findViewById(R.id.boringText);
+        momLine = findViewById(R.id.momLine);
 
+        // Boring screen btn
+        fiveButton.setOnClickListener(view -> {
+            startLayout.setVisibility(View.GONE);
+            boringLayout.setVisibility(View.VISIBLE);
+
+            animateBoringText();
+            showBoringMomMessageAfterDelay();
+        });
+
+        // Start bomb game
+        gameButton.setOnClickListener(view -> {
+            startLayout.setVisibility(View.GONE);
+            bombLayout.setVisibility(View.VISIBLE);
+            startBombSequence();
+        });
+
+        // DISARM button
         disarmButton.setOnClickListener(view -> disarmed = true);
-        replayButton.setOnClickListener(view -> recreate()); // restart activity
 
-        startBombSequence();
+        // Replay button
+        replayButton.setOnClickListener(view -> {
+            recreate(); // restarts activity (fresh reset)
+        });
+    }
+
+    private void animateBoringText(){
+        boringText.setScaleX(1f);
+        boringText.setScaleY(1f);
+        boringText.setText("You are a very BORING person.");
+        boringText.setVisibility(View.VISIBLE);
+
+        // ⏳ Wait 3 seconds before starting animation
+        // postDelayed(Runnable, delayMillis)
+        boringText.postDelayed(() -> {
+            // method chaining for readability
+            boringText.animate() // returns a ViewPropertyAnimator object
+                    .scaleX(10f) // calls scaleX on that obj
+                    .scaleY(10f)
+                    .setDuration(3000);
+        }, 1000);
+    }
+
+    private void showBoringMomMessageAfterDelay(){
+        boringText.postDelayed(() -> { // lambda expression. "when clicked, do this"
+            boringText.setVisibility(View.INVISIBLE);
+            momLine.setText("Your mom doesn't love you.");
+            momLine.setVisibility(View.VISIBLE);
+            replayButton.setVisibility(View.VISIBLE);
+        }, 4000); // waits 3 sec
     }
 
     private void startBombSequence() {
@@ -75,6 +138,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void toggleFlashing() {
         isFlashing = !isFlashing;
-        bombLayout.setBackgroundColor(isFlashing ? 0xFFFF0000 : 0xFF000000); // red/black
+        bombLayout.setBackgroundColor(isFlashing ? 0xFFFF0000 : 0xFF000000);
     }
 }
